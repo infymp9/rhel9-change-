@@ -1,0 +1,59 @@
+
+IP Change:
+---
+  In RHEL 9 the files under /etc/sysconfig/network-scripts, like /etc/sysconfig/network-scripts/ifcfg-eth0, no longer function as expected. 
+Instead, when you’re dealing with a RHEL 9 system, do not use a ifcfg-* script, but instead use ‘nmcli’ directly similar to the following commands:
+
+  For an IP Swap::
+
+  Run --  ip a 
+    save the `inet 1.2.3.4/32 brd […]` line (for eth0) to have the ‘[old ip]/[old prefix]’ on hand.
+
+    nmcli connection modify ethernet-eth0 ipv4.address [new ip]/[new prefix]
+    nmcli connection modify ethernet-eth0 ipv4.gateway [gateway address]
+
+    nmcli connection modify ethernet-eth0 -ipv4.address [old ip]/[old prefix]
+
+   === IF NEEDED ===
+
+    nmcli connection modify ethernet-eth0 ipv4.dns 127.0.0.1,[new DNS server]
+
+
+  === Once Settings Have Been Changed ===
+
+    systemctl restart NetworkManager
+
+      == Ensure /etc/resolv.conf was rebuilt with correct settings from NetworkManager if DNS changed ==
+
+   View the current settings with:
+
+    nmcli connection show ethernet-eth0
+
+up the connection:
+nmcli connection up eth0
+
+  You may need to reboot the server to clean up any hanging connections to the old IP address. It may still show up in the ‘ip a’ listing until it’s fully cleaned/rebooted. If it shows up *after* a reboot ping one of us to dig into it to see where it may be trying to hold onto the address.
+
+  To Add an Aliased IP::
+
+    You may get a request to an an aliased IP like eth0:1 … or similar. That is done with just:
+
+      nmcli connection modify ethernet-eth0 +ipv4.address [new ip]/[prefix]
+
+    When you run ‘ip a’ … It will list all the IP addresses attached to a device. 
+
+
+
+Current Server Details:
+IP : 172.29.34.70
+GW :172.29.34.1
+NM :=255.255.255.0
+VLAN :  INTRA_172.29.34.0-255.255.255.0_700_VSS
+ 
+Requested Server Details:
+New IP: 172.29.32.202
+New Mask: 255.255.255.224
+New Gateway: 172.29.32.193 (FNL2)
+VLAN : VRF_172.29.32.192-255.255.255.224_301_VSS
+
+Hostname : example.com
